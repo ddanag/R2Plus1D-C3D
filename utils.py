@@ -21,8 +21,8 @@ class VideoDataset(Dataset):
     """
 
     def __init__(self, dataset='ucf101', split='train'):
-        self.original_dir = os.path.join('data', dataset)
-        self.preprocessed_dir = os.path.join('data', 'preprocessed_' + dataset)
+        self.original_dir = '/work/rclgroup/ucf101'
+        self.preprocessed_dir = os.path.join('/work/rclgroup/', 'preprocessed_' + dataset)
         self.split = split
 
         if not self.check_integrity():
@@ -30,6 +30,7 @@ class VideoDataset(Dataset):
                                'download it from official website.'.format(split, dataset))
 
         if not self.check_preprocess():
+            #import pdb; pdb.set_trace()
             print('Preprocessing {} split of {} dataset, this will take long, '
                   'but it will be done only once.'.format(split, dataset))
             self.preprocess()
@@ -224,7 +225,7 @@ def load_data(dataset='ucf101', batch_size=8):
 
 def get_labels(dataset='ucf101'):
     labels = []
-    with open('data/{}_labels.txt'.format(dataset), 'r') as load_f:
+    with open('/work/rclgroup/{}_labels.txt'.format(dataset), 'r') as load_f:
         raw_labels = load_f.readlines()
     for label in raw_labels:
         labels.append(label.replace('\n', ''))

@@ -1,5 +1,6 @@
 import argparse
 
+import sys
 import pandas as pd
 import torch
 import torch.optim as optim
@@ -14,7 +15,6 @@ from models.C3D import C3D
 from models.R2Plus1D import R2Plus1D
 
 torch.backends.cudnn.benchmark = True
-
 
 def processor(sample):
     data, labels, training = sample
@@ -50,10 +50,10 @@ def on_start_epoch(state):
 
 
 def on_end_epoch(state):
-    loss_logger.log(state['epoch'], meter_loss.value()[0], name='train')
-    top1_accuracy_logger.log(state['epoch'], meter_accuracy.value()[0], name='train')
-    top5_accuracy_logger.log(state['epoch'], meter_accuracy.value()[1], name='train')
-    train_confusion_logger.log(meter_confusion.value())
+    #loss_logger.log(state['epoch'], meter_loss.value()[0], name='train')
+    #top1_accuracy_logger.log(state['epoch'], meter_accuracy.value()[0], name='train')
+    #top5_accuracy_logger.log(state['epoch'], meter_accuracy.value()[1], name='train')
+    #train_confusion_logger.log(meter_confusion.value())
     results['train_loss'].append(meter_loss.value()[0])
     results['train_top1_accuracy'].append(meter_accuracy.value()[0])
     results['train_top5_accuracy'].append(meter_accuracy.value()[1])
@@ -66,10 +66,10 @@ def on_end_epoch(state):
     with torch.no_grad():
         engine.test(processor, val_loader)
 
-    loss_logger.log(state['epoch'], meter_loss.value()[0], name='val')
-    top1_accuracy_logger.log(state['epoch'], meter_accuracy.value()[0], name='val')
-    top5_accuracy_logger.log(state['epoch'], meter_accuracy.value()[1], name='val')
-    val_confusion_logger.log(meter_confusion.value())
+    #loss_logger.log(state['epoch'], meter_loss.value()[0], name='val')
+    #top1_accuracy_logger.log(state['epoch'], meter_accuracy.value()[0], name='val')
+    #top5_accuracy_logger.log(state['epoch'], meter_accuracy.value()[1], name='val')
+    #val_confusion_logger.log(meter_confusion.value())
     results['val_loss'].append(meter_loss.value()[0])
     results['val_top1_accuracy'].append(meter_accuracy.value()[0])
     results['val_top5_accuracy'].append(meter_accuracy.value()[1])
@@ -92,10 +92,10 @@ def on_end_epoch(state):
     with torch.no_grad():
         engine.test(processor, test_loader)
 
-    loss_logger.log(state['epoch'], meter_loss.value()[0], name='test')
-    top1_accuracy_logger.log(state['epoch'], meter_accuracy.value()[0], name='test')
-    top5_accuracy_logger.log(state['epoch'], meter_accuracy.value()[1], name='test')
-    test_confusion_logger.log(meter_confusion.value())
+    #loss_logger.log(state['epoch'], meter_loss.value()[0], name='test')
+    #top1_accuracy_logger.log(state['epoch'], meter_accuracy.value()[0], name='test')
+    #top5_accuracy_logger.log(state['epoch'], meter_accuracy.value()[1], name='test')
+    #test_confusion_logger.log(meter_confusion.value())
     results['test_loss'].append(meter_loss.value()[0])
     results['test_top1_accuracy'].append(meter_accuracy.value()[0])
     results['test_top5_accuracy'].append(meter_accuracy.value()[1])
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Train Activity Recognition Model')
     parser.add_argument('--data_type', default='ucf101', type=str, choices=['ucf101', 'hmdb51', 'kinetics600'],
                         help='dataset type')
-    parser.add_argument('--gpu_ids', default='0,1', type=str, help='selected gpu')
+    parser.add_argument('--gpu_ids', default='0, 1', type=str, help='selected gpu')
     parser.add_argument('--model_type', default='r2plus1d', type=str, choices=['r2plus1d', 'c3d'], help='model type')
     parser.add_argument('--batch_size', default=8, type=int, help='training batch size')
     parser.add_argument('--num_epochs', default=100, type=int, help='training epoch number')
@@ -134,7 +134,7 @@ if __name__ == '__main__':
 
     train_loader, val_loader, test_loader = utils.load_data(DATA_TYPE, BATCH_SIZE)
     NUM_CLASS = len(train_loader.dataset.label2index)
-
+    
     if MODEL_TYPE == 'r2plus1d':
         model = R2Plus1D(NUM_CLASS, (2, 2, 2, 2))
     else:
@@ -162,6 +162,7 @@ if __name__ == '__main__':
                          {'params': model.fc.parameters(), 'lr': 1e-4 * 10}]
     else:
         optim_configs = [{'params': model.parameters(), 'lr': 1e-4}]
+        
 
     loss_criterion = nn.CrossEntropyLoss()
     optimizer = optim.Adam(optim_configs, lr=1e-4, weight_decay=5e-4)
@@ -172,6 +173,7 @@ if __name__ == '__main__':
     if len(device_ids) > 1:
         if torch.cuda.device_count() >= len(device_ids):
             model = nn.DataParallel(model, device_ids=device_ids)
+            
         else:
             raise ValueError("the machine don't have {} gpus".format(str(len(device_ids))))
 
@@ -180,12 +182,12 @@ if __name__ == '__main__':
     meter_accuracy = tnt.meter.ClassErrorMeter(topk=[1, 5], accuracy=True)
     meter_confusion = tnt.meter.ConfusionMeter(NUM_CLASS, normalized=True)
 
-    loss_logger = VisdomPlotLogger('line', env=DATA_TYPE, opts={'title': 'Loss'})
-    top1_accuracy_logger = VisdomPlotLogger('line', env=DATA_TYPE, opts={'title': 'Top1 Accuracy'})
-    top5_accuracy_logger = VisdomPlotLogger('line', env=DATA_TYPE, opts={'title': 'Top5 Accuracy'})
-    train_confusion_logger = VisdomLogger('heatmap', env=DATA_TYPE, opts={'title': 'Train Confusion Matrix'})
-    val_confusion_logger = VisdomLogger('heatmap', env=DATA_TYPE, opts={'title': 'Val Confusion Matrix'})
-    test_confusion_logger = VisdomLogger('heatmap', env=DATA_TYPE, opts={'title': 'Test Confusion Matrix'})
+    #loss_logger = VisdomPlotLogger('line', env=DATA_TYPE, opts={'title': 'Loss'})
+    #top1_accuracy_logger = VisdomPlotLogger('line', env=DATA_TYPE, opts={'title': 'Top1 Accuracy'})
+    #top5_accuracy_logger = VisdomPlotLogger('line', env=DATA_TYPE, opts={'title': 'Top5 Accuracy'})
+    #train_confusion_logger = VisdomLogger('heatmap', env=DATA_TYPE, opts={'title': 'Train Confusion Matrix'})
+    #val_confusion_logger = VisdomLogger('heatmap', env=DATA_TYPE, opts={'title': 'Val Confusion Matrix'})
+    #test_confusion_logger = VisdomLogger('heatmap', env=DATA_TYPE, opts={'title': 'Test Confusion Matrix'})
 
     engine.hooks['on_sample'] = on_sample
     engine.hooks['on_forward'] = on_forward
