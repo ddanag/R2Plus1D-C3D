@@ -13,6 +13,7 @@ from tqdm import tqdm
 import utils
 from models.C3D import C3D
 from models.R2Plus1D import R2Plus1D
+from models.QuantR2Plus1D import QuantR2Plus1D
 
 torch.backends.cudnn.benchmark = True
 
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     parser.add_argument('--data_type', default='ucf101', type=str, choices=['ucf101', 'hmdb51', 'kinetics600'],
                         help='dataset type')
     parser.add_argument('--gpu_ids', default='0, 1', type=str, help='selected gpu')
-    parser.add_argument('--model_type', default='r2plus1d', type=str, choices=['r2plus1d', 'c3d'], help='model type')
+    parser.add_argument('--model_type', default='quant_r2plus1d', type=str, choices=['quant_r2plus1d', 'r2plus1d', 'c3d'], help='model type')
     parser.add_argument('--batch_size', default=8, type=int, help='training batch size')
     parser.add_argument('--num_epochs', default=100, type=int, help='training epoch number')
     parser.add_argument('--pre_train', default=None, type=str, help='used pre-trained model epoch name')
@@ -137,6 +138,13 @@ if __name__ == '__main__':
     
     if MODEL_TYPE == 'r2plus1d':
         model = R2Plus1D(NUM_CLASS, (2, 2, 2, 2))
+    elif MODEL_TYPE == 'quant_r2plus1d':
+        from configparser import ConfigParser
+        cfg = ConfigParser()
+        cfg.read('models/QuantR2Plus1D.ini')
+        weight_bit_width = cfg.getint('QUANT', 'WEIGHT_BIT_WIDTH')
+        act_bit_width = cfg.getint('QUANT', 'ACT_BIT_WIDTH')
+        model = QuantR2Plus1D(num_classes = NUM_CLASS, layer_sizes = (2, 2, 2, 2), weight_bit_width = weight_bit_width, act_bit_width = act_bit_width)
     else:
         model = C3D(NUM_CLASS)
 

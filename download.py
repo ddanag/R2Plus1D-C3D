@@ -8,24 +8,24 @@ import pandas as pd
 from joblib import Parallel
 from joblib import delayed
 
-if not os.path.exists('data/temp'):
-    os.mkdir('data/temp')
-if not os.path.exists('data/kinetics600'):
-    os.mkdir('data/kinetics600')
-if not os.path.exists('data/temp/kinetics600'):
-    os.mkdir('data/temp/kinetics600')
+if not os.path.exists('/work/rclgroup/temp2'):
+    os.mkdir('/work/rclgroup/temp2')
+if not os.path.exists('/work/rclgroup/kinetics600'):
+    os.mkdir('/work/rclgroup/kinetics600')
+if not os.path.exists('/work/rclgroup/temp2/kinetics600'):
+    os.mkdir('/work/rclgroup/temp2/kinetics600')
 
-kinetics_train_split = zipfile.ZipFile('data/kinetics_600_train (1).zip')
-kinetics_train_split.extractall('data/temp/kinetics600')
-kinetics_train_split.close()
+#kinetics_train_split = zipfile.ZipFile('/work/rclgroup/kinetics_600_train (1).zip')
+#kinetics_train_split.extractall('/work/rclgroup/temp2/kinetics600')
+#kinetics_train_split.close()
 
-kinetics_val_split = zipfile.ZipFile('data/kinetics_600_val (1).zip')
-kinetics_val_split.extractall('data/temp/kinetics600')
-kinetics_val_split.close()
+#kinetics_val_split = zipfile.ZipFile('/work/rclgroup/kinetics_600_val (1).zip')
+#kinetics_val_split.extractall('/work/rclgroup/temp2/kinetics600')
+#kinetics_val_split.close()
 
-kinetics_test_split = zipfile.ZipFile('data/kinetics_600_test (2).zip')
-kinetics_test_split.extractall('data/temp/kinetics600')
-kinetics_test_split.close()
+#kinetics_test_split = zipfile.ZipFile('/work/rclgroup/kinetics_600_test (2).zip')
+#kinetics_test_split.extractall('/work/rclgroup/temp2/kinetics600')
+#kinetics_test_split.close()
 
 
 def parse_kinetics_annotations(input_csv):
@@ -45,8 +45,8 @@ def create_video_folders(dataset, output_dir, split):
         if not os.path.exists(this_dir):
             os.makedirs(this_dir)
         label_to_dir[label_name] = this_dir
-    if not os.path.exists('data/kinetics600_labels.txt'):
-        with open('data/kinetics600_labels.txt', 'w') as f:
+    if not os.path.exists('/work/rclgroup/kinetics600_labels.txt'):
+        with open('/work/rclgroup/kinetics600_labels.txt', 'w') as f:
             for label_name in dataset['label-name'].unique():
                 f.write(label_name + '\n')
 
@@ -77,8 +77,8 @@ def download_clip(video_identifier, output_filename, start_time, end_time, url_b
         Indicates the ending time in seconds of the trimmed video.
     """
     # construct command line for getting the direct video link
-    command = ['youtube-dl',
-               '--quiet', '--no-warnings',
+    command = ['yt-dlp',
+               '--quiet', '--no-warnings', '--verbose',
                '-f', '18',  # 640x360 h264 encoded video
                '--get-url',
                '"%s"' % (url_base + video_identifier)]
@@ -128,7 +128,7 @@ def download_clip_wrapper(row, label_to_dir, trim_format, index):
             print('Index: %-16s Clip-ID: %-31s %-50s' % (index, clip_id, log.strip().decode('utf-8')))
 
 
-def download_kinetics(input_csv, split, output_dir='data/kinetics600', trim_format='%06d'):
+def download_kinetics(input_csv, split, output_dir='/work/rclgroup/kinetics600', trim_format='%06d'):
     # read and parse Kinetics
     dataset = parse_kinetics_annotations(input_csv)
 
@@ -143,29 +143,29 @@ def download_kinetics(input_csv, split, output_dir='data/kinetics600', trim_form
         in dataset.iterrows())
 
 
-for split_file in ['kinetics_val.csv', 'kinetics_600_test.csv', 'kinetics_train.csv']:
+for split_file in ['kinetics_val.csv', 'kinetics_test.csv', 'kinetics_train.csv']:
     split_mode = split_file.split('_')[-1].split('.')[0]
     print('Download {} part of kinetics600 dataset'.format(split_mode))
-    download_kinetics('data/temp/kinetics600/{}'.format(split_file), split=split_mode)
+    download_kinetics('/work/rclgroup/temp2/kinetics600/{}'.format(split_file), split=split_mode)
     # clean the corrupted videos
     print('Check the videos about {} part of kinetics600 dataset, '
           'if the video is corrupted, it will be deleted'.format(split_mode))
-    for label in sorted(os.listdir('data/kinetics600/{}'.format(split_mode))):
-        for video in sorted(os.listdir('data/kinetics600/{}/{}'.format(split_mode, label))):
+    for label in sorted(os.listdir('/work/rclgroup/kinetics600/{}'.format(split_mode))):
+        for video in sorted(os.listdir('/work/rclgroup/kinetics600/{}/{}'.format(split_mode, label))):
 
             command = ['/usr/local/bin/ffmpeg',
                        '-loglevel', 'error',
-                       '-i', '"%s"' % 'data/kinetics600/{}/{}/{}'.format(split_mode, label, video),
+                       '-i', '"%s"' % '/work/rclgroup/kinetics600/{}/{}/{}'.format(split_mode, label, video),
                        '-f', 'null',
-                       '- 1>data/temp/error.log']
+                       '- 1>/work/rclgroup/temp2/error.log']
             command = ' '.join(command)
 
             try:
                 output = subprocess.check_output(command, shell=True, stderr=subprocess.STDOUT)
                 print('Clip-Name: %-40s %-50s' % (video, 'Status: Success Saved.'))
             except subprocess.CalledProcessError as err:
-                os.remove('data/kinetics600/{}/{}/{}'.format(split_mode, label, video))
+                os.remove('/work/rclgroup/kinetics600/{}/{}/{}'.format(split_mode, label, video))
                 print('Clip-Name: %-40s %-50s' % (video, 'Status: Corrupted.'))
 
 # clean tmp dir.
-shutil.rmtree('data/temp')
+#shutil.rmtree('/work/rclgroup/temp2')
