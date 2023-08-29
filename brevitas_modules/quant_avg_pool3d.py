@@ -140,12 +140,13 @@ class TruncAdaptiveAvgPool3d(QuantTruncMixin, QuantLayerMixin, AdaptiveAvgPool3d
 
     def forward(self, input: Union[Tensor, QuantTensor]):
         x = self.unpack_input(input)
-        import pdb; pdb.set_trace()
+        
         # shortcut execution through the export impl during export
         if self.export_mode:
             out = self.export_handler(x.value)
             self._set_global_is_quant_layer(False)
             return out
+        #import pdb; pdb.set_trace()
         y = x.set(value=super(TruncAdaptiveAvgPool3d, self).forward(x.value))
         k_size, stride = self.compute_kernel_size_stride(x.value.shape[2:], y.value.shape[2:])
         if self.cache_kernel_size_stride:

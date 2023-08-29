@@ -90,13 +90,26 @@ class SpatioTemporalConv(nn.Module):
                 (kernel_size[0] * kernel_size[1] * kernel_size[2] * in_channels * out_channels) / (
                         kernel_size[1] * kernel_size[2] * in_channels + kernel_size[0] * out_channels)))
 
-        self.spatial_conv = QuantConv3d(in_channels = in_channels, out_channels = intermed_channels, kernel_size = spatial_kernel_size,
-                                      stride=spatial_stride, padding=spatial_padding, bias=bias, weight_quant=CommonIntWeightPerChannelQuant, weight_bit_width=weight_bit_width)
+        self.spatial_conv = QuantConv3d(in_channels = in_channels, 
+                                        out_channels = intermed_channels, 
+                                        kernel_size = spatial_kernel_size,
+                                        stride=spatial_stride, 
+                                        padding=spatial_padding, 
+                                        bias=bias, 
+                                        weight_quant=CommonIntWeightPerChannelQuant, 
+                                        weight_bit_width=weight_bit_width)
         
         self.bn1 = nn.BatchNorm3d(intermed_channels)
 
-        self.temporal_conv = QuantConv3d(in_channels = intermed_channels, out_channels = out_channels, kernel_size = temporal_kernel_size,
-                                       stride=temporal_stride, padding=temporal_padding, bias=bias, weight_quant=CommonIntWeightPerChannelQuant, weight_bit_width=weight_bit_width)
+        self.temporal_conv = QuantConv3d(   in_channels = intermed_channels, 
+                                            out_channels = out_channels, 
+                                            kernel_size = temporal_kernel_size,
+                                            stride=temporal_stride, 
+                                            padding=temporal_padding, 
+                                            bias=bias, 
+                                            weight_quant=CommonIntWeightPerChannelQuant, 
+                                            weight_bit_width=weight_bit_width)
+        
         #pytorch conv 3d: in_channels, out_channels, kernel_size, stride=1, padding=0, dilation=1, groups=1, 
         #bias=True, padding_mode='zeros', device=None, dtype=None
 
@@ -148,7 +161,11 @@ class ResBlock(nn.Module):
         self.conv2 = SpatioTemporalConv(out_channels, out_channels, kernel_size, padding=padding, weight_bit_width = weight_bit_width, act_bit_width = act_bit_width)
         self.bn2 = nn.BatchNorm3d(out_channels)
 
-        self.relu = QuantReLU()
+        self.relu = QuantReLU(  act_quant=CommonUintActQuant,
+                                bit_width=act_bit_width,
+                                per_channel_broadcastable_shape=(1, 1280, 1, 1),
+                                scaling_per_channel=False,
+                                return_quant_tensor=True)
 
     def forward(self, x):
         res = self.relu(self.bn1(self.conv1(x)))
@@ -209,9 +226,10 @@ class FeatureLayer(nn.Module):
         self.conv3 = ResLayer(64, 128, 3, layer_sizes[1], downsample=True, weight_bit_width = weight_bit_width, act_bit_width = act_bit_width)
         self.conv4 = ResLayer(128, 256, 3, layer_sizes[2], downsample=True, weight_bit_width = weight_bit_width, act_bit_width = act_bit_width)
         self.conv5 = ResLayer(256, 512, 3, layer_sizes[3], downsample=True, weight_bit_width = weight_bit_width, act_bit_width = act_bit_width)
+        #import pdb; pdb.set_trace()
         # global average pooling of the output
-        self.pool = TruncAdaptiveAvgPool3d(1)
-
+        self.pool = TruncAdaptiveAvgPool3d(output_size = 1, bit_width=act_bit_width)
+    
     def forward(self, x):
         x = self.conv1(x)
         x = self.conv2(x)
