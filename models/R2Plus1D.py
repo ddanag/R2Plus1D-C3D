@@ -153,7 +153,7 @@ class FeatureLayer(nn.Module):
         x = self.conv3(x)
         x = self.conv4(x)
         x = self.conv5(x)
-
+        #import pdb; pdb.set_trace()
         x = self.pool(x)
 
         return x.view(-1, 512)
@@ -178,6 +178,7 @@ class R2Plus1D(nn.Module):
         self.__init_weight()
 
     def forward(self, x):
+        
         x = self.feature(x)
         logits = self.fc(x)
 

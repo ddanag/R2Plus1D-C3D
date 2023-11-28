@@ -1,3 +1,8 @@
+
+import sys
+sys.path.append('/home/diaconu.d/mywork/brevitas_3D_CNN/src/')
+import brevitas
+
 import math
 
 import torch.nn as nn
@@ -9,8 +14,8 @@ from brevitas.quant import IntBias, Int8WeightPerTensorFloat
 from brevitas.core.restrict_val import RestrictValueType
 
 from brevitas.nn.quant_layer import QuantWeightBiasInputOutputLayer as QuantWBIOL
-from brevitas_modules.quant_conv3d import QuantConv3d
-from brevitas_modules.quant_avg_pool3d import TruncAdaptiveAvgPool3d
+from brevitas.nn.quant_conv import QuantConv3d
+from brevitas.nn.quant_avg_pool import QuantAvgPool3d, QuantAdaptiveAvgPool3d
 
 
 class CommonIntWeightPerTensorQuant(Int8WeightPerTensorFloat):
@@ -228,18 +233,21 @@ class FeatureLayer(nn.Module):
         self.conv5 = ResLayer(256, 512, 3, layer_sizes[3], downsample=True, weight_bit_width = weight_bit_width, act_bit_width = act_bit_width)
         #import pdb; pdb.set_trace()
         # global average pooling of the output
-        self.pool = TruncAdaptiveAvgPool3d(output_size = 1, bit_width=act_bit_width)
+        self.pool = QuantAdaptiveAvgPool3d(output_size = 1, bit_width=act_bit_width)
+        #self.pool = QuantAvgPool3d(output_size = 1, bit_width=act_bit_width, kernel_size=3)
+        
     
     def forward(self, x):
         x = self.conv1(x)
+        
         x = self.conv2(x)
         x = self.conv3(x)
         x = self.conv4(x)
         x = self.conv5(x)
-
+        #import pdb; pdb.set_trace()
         x = self.pool(x)
-
-        return x.view(-1, 512)
+        
+        return x.view(-1, x.size(1))
 
 
 class QuantR2Plus1D(nn.Module):
@@ -266,6 +274,7 @@ class QuantR2Plus1D(nn.Module):
         self.__init_weight()
 
     def forward(self, x):
+        
         x = self.feature(x)
         logits = self.fc(x)
 

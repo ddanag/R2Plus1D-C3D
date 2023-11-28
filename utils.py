@@ -7,8 +7,8 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 
 # global configs
-CLIP_LEN, RESIZE_HEIGHT, CROP_SIZE = 32, 128, 112
-
+#CLIP_LEN, RESIZE_HEIGHT, CROP_SIZE = 32, 128, 112
+CLIP_LEN, RESIZE_HEIGHT, CROP_SIZE = 16, 128, 112
 
 class VideoDataset(Dataset):
     r"""A Dataset for a folder of videos. Expects the directory structure to be

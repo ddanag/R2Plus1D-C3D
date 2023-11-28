@@ -1,12 +1,12 @@
 #!/bin/bash
-#SBATCH --nodes=4
+#SBATCH --nodes=2
 #SBATCH --time=30-00:00:00
-#SBATCH --job-name=R2Plus1D
+#SBATCH --job-name=C3D_FP
 #SBATCH --partition=ce-mri
-#SBATCH --gres=gpu:v100:4
+#SBATCH --gres=gpu:v100:2
 #SBATCH --mem=372G
 #SBATCH --exclusive
-#SBATCH --nodelist=d[3095-3098]
+#SBATCH --nodelist=d[3093,3094]
 #SBATCH --output=/home/diaconu.d/mywork/script/%j.out
 #SBATCH --error=/home/diaconu.d/mywork/script/%j.err
 
@@ -28,6 +28,8 @@ srun torchrun \
 --rdzv_endpoint $MASTER_ADDR:$MASTER_PORT \ 
 python train.py \
 --num_epochs 100 \
---gpu_ids 0
+--gpu_ids 0 \
+--batch_size 8 
+
 
 awk -v t=$SECONDS 'BEGIN{printf "Elapsed Time (HH:MM:SS): %d:%02d:%02d\n", t/3600, t/60%60, t%60}'
